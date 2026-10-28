@@ -1,0 +1,9 @@
+Welcome to CheetahPay Shield, a privacy-focused merchant payment prototype built for ZECATHON 2026. CheetahPay explores confidential Web3 checkout and multi-rail settlement, designed natively around the Zcash network.
+
+In the Merchant Invoices suite, merchants create standardized payment requests in ZEC. When entering an address, CheetahPay analyzes the receiver format. Unified addresses support shielded receiver pools, while transparent addresses display explicit public ledger warnings. Setting an amount generates a ZIP-321 request with our invoice reference bound directly into the memo field, opening checkout instantly.
+
+In Pay with Zcash, customers receive an offline, client-side SVG QR code or can launch their wallet via ZIP-321 protocol dispatch. It is important to note that generating a payment request formats transaction parameters; it does not broadcast funds. In our testnet verification terminal, querying on-chain transactions confirms block inclusion, while shielded note plaintext properly remains awaiting external merchant wallet decryption.
+
+For Web2 onboarding, the Fund Wallet interface functions as an illustrative fee calculator. All calculations and conversion rates are demo estimates, not live quotes. Live fiat funding is unavailable, and no payment orders or balances are created.
+
+Finally, the cross-rail ledger aggregates transaction telemetry with provenance classifications and one-click CSV auditing export. CheetahPay Shield establishes a practical foundation for privacy-aware commerce on Zcash.

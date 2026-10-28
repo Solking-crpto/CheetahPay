@@ -115,8 +115,10 @@ export const ZcashCheckoutView: React.FC<ZcashCheckoutViewProps> = ({
       if (verification.found) {
         if (verification.settlementScope === 'mismatch') {
           toast.error(verification.error || 'Transaction rejected: Output mismatch with invoice.');
-        } else if (verification.confirmations >= invoice.requiredConfirmations) {
-          toast.success(`Transaction verified on-chain! ${verification.confirmations} confirmations. Invoice settled.`);
+        } else if (invoice.status === 'AWAITING_WALLET_VERIFICATION') {
+          toast.info(`Transaction included on Zcash Testnet (${verification.confirmations} confirmations). Awaiting merchant wallet note decryption.`);
+        } else if (invoice.status === 'CONFIRMED') {
+          toast.success(`Transparent output verified on-chain (${verification.confirmations} confirmations). Invoice confirmed.`);
         } else {
           toast.warning(`Transaction detected in block ${verification.blockNumber || 'mempool'}. Awaiting confirmations (${verification.confirmations}/${invoice.requiredConfirmations}).`);
         }
@@ -344,7 +346,7 @@ export const ZcashCheckoutView: React.FC<ZcashCheckoutViewProps> = ({
                   </span>
                 </div>
                 <p className="font-sans text-[10px] text-[#737B87] leading-normal">
-                  Standard web browsers lack native WASM support for Zcash zero-knowledge SNARK proving circuits. CheetahPay routes payment parameters directly via standard <strong>ZIP-321 protocol dispatch</strong> (<code className="text-[#9CA3AF]">zcash:</code>) to external wallets (Zashi, Ywallet, Zecwallet, or MetaMask Zcash Snap).
+                  Standard web browsers lack native WASM support for Zcash zero-knowledge SNARK proving circuits. CheetahPay formats payment requests via <strong>ZIP-321 protocol dispatch</strong> (<code className="text-[#9CA3AF]">zcash:</code>) to external wallets (Zashi, Ywallet, Zecwallet). Generating a URI or QR code formats parameters; it does not broadcast or complete a payment.
                 </p>
                 <div className="pt-1 border-t border-[#2A3038] flex items-center justify-between text-[#737B87] text-[9px]">
                   <span>• Key Custody: Delegated to wallet</span>
@@ -458,11 +460,11 @@ export const ZcashCheckoutView: React.FC<ZcashCheckoutViewProps> = ({
                   </div>
                 </div>
 
-                {/* Encrypted Memo Payload */}
+                {/* Payment Request Memo */}
                 <div className="p-3 bg-[#0B0D10] border border-[#2A3038] rounded-md">
                   <div className="flex items-center justify-between text-[#737B87] text-[10px] uppercase tracking-wider mb-1">
                     <span className="flex items-center gap-1 text-[#F3F4F6]">
-                      <Lock className="w-3 h-3 text-[#737B87]" /> Encrypted Memo (Invoice Binding)
+                      <Lock className="w-3 h-3 text-[#737B87]" /> Payment Request Memo (Invoice Reference)
                     </span>
                     <button
                       type="button"
@@ -476,6 +478,9 @@ export const ZcashCheckoutView: React.FC<ZcashCheckoutViewProps> = ({
                   <div className="text-[#9CA3AF] select-all text-[11px] font-sans">
                     {currentInvoice.memo}
                   </div>
+                  <p className="text-[10px] text-[#737B87] mt-1">
+                    Encoded into ZIP-321 request. Encrypted into the 512-byte on-chain shielded note by the payer's wallet during transfer.
+                  </p>
                 </div>
 
                 {/* Raw ZIP-321 URI */}
@@ -631,6 +636,26 @@ export const ZcashCheckoutView: React.FC<ZcashCheckoutViewProps> = ({
                             <span>Verify Tx</span>
                           </button>
                         </div>
+                      </div>
+
+                      {/* Testnet Sample Tx Demonstration Helper */}
+                      <div className="p-3 bg-[#0B0D10] border border-[#2A3038] rounded-md space-y-1.5 text-[11px]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#9CA3AF] font-medium">Testnet Verification Demonstration:</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSubmittedTxId('a8810b4b9b0ad01336103dc8fb09936da2a7b25cee78e588edc381ad7872719f');
+                              toast.info('Loaded testnet sample tx (mined block reward in block 4548318)');
+                            }}
+                            className="text-[#D6A23D] hover:underline font-mono text-[10px]"
+                          >
+                            Load Sample Testnet Tx
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-[#737B87] leading-relaxed">
+                          <strong className="text-[#9CA3AF]">Testnet example — not a customer payment.</strong> This mined coinbase reward transaction (block 4548318) demonstrates live node telemetry and confirmation polling. It does not represent customer funds or merchant settlement.
+                        </p>
                       </div>
 
                       <p className="text-[10px] text-[#737B87] leading-normal">

@@ -1,0 +1,55 @@
+1
+00:00:00,500 --> 00:00:07,500
+Welcome to CheetahPay Shield, a privacy-focused merchant payment prototype built for ZECATHON 2026.
+
+2
+00:00:07,600 --> 00:00:14,200
+CheetahPay explores confidential Web3 checkout and multi-rail settlement, designed natively around the Zcash network.
+
+3
+00:00:14,700 --> 00:00:20,500
+In the Merchant Invoices suite, merchants create standardized payment requests in ZEC.
+
+4
+00:00:20,800 --> 00:00:25,000
+When entering an address, CheetahPay analyzes the receiver format.
+
+5
+00:00:25,300 --> 00:00:33,800
+Unified addresses support shielded receiver pools, while transparent addresses display explicit public ledger warnings.
+
+6
+00:00:34,200 --> 00:00:41,500
+Setting an amount generates a ZIP-321 request with our invoice reference bound directly into the memo field, opening checkout instantly.
+
+7
+00:00:42,000 --> 00:00:49,500
+In Pay with Zcash, customers receive an offline, client-side SVG QR code or can launch their wallet via ZIP-321 protocol dispatch.
+
+8
+00:00:49,900 --> 00:00:57,500
+It is important to note that generating a payment request formats transaction parameters; it does not broadcast funds.
+
+9
+00:00:57,800 --> 00:01:09,000
+In our testnet verification terminal, querying on-chain transactions confirms block inclusion, while shielded note plaintext properly remains awaiting external merchant wallet decryption.
+
+10
+00:01:09,500 --> 00:01:14,800
+For Web2 onboarding, the Fund Wallet interface functions as an illustrative fee calculator.
+
+11
+00:01:15,100 --> 00:01:19,200
+All calculations and conversion rates are demo estimates, not live quotes.
+
+12
+00:01:19,500 --> 00:01:23,500
+Live fiat funding is unavailable, and no payment orders or balances are created.
+
+13
+00:01:24,000 --> 00:01:31,000
+Finally, the cross-rail ledger aggregates transaction telemetry with provenance classifications and one-click CSV auditing export.
+
+14
+00:01:31,300 --> 00:01:37,000
+CheetahPay Shield establishes a practical foundation for privacy-aware commerce on Zcash.

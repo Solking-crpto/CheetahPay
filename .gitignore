@@ -1,4 +1,4 @@
-﻿.env
+.env
 .env.*
 !.env.example
 !.env.sample
@@ -11,3 +11,4 @@ out/
 cache/
 broadcast/
 artifacts/
+docs/demo-assets/*.mp3
