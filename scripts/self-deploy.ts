@@ -1,4 +1,6 @@
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import {
   initiateDeveloperControlledWalletsClient,
@@ -14,8 +16,10 @@ import {
 
 const DEFAULT_CHAIN = 'ARC-TESTNET';
 
-const WORK_DIR = '/home/user/app';
-const CONTRACTS_ROOT_DIR = `${WORK_DIR}/contracts`;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const WORK_DIR = path.resolve(__dirname, '..');
+const CONTRACTS_ROOT_DIR = path.join(WORK_DIR, 'contracts');
 /*
  * Solidity sources live directly under `contracts/` (no `contract-code/`
  * subdir). Kept as its own constant so the source-vs-build distinction
@@ -23,10 +27,10 @@ const CONTRACTS_ROOT_DIR = `${WORK_DIR}/contracts`;
  * `app/lib/stores/contracts.ts` and `deploy-contract-tool.ts`.
  */
 const CONTRACT_SOURCES_DIR = CONTRACTS_ROOT_DIR;
-const FOUNDRY_OUT_DIR = `${CONTRACTS_ROOT_DIR}/out`;
-const CONTRACT_METADATA_DIR = `${CONTRACTS_ROOT_DIR}/contract-metadata`;
+const FOUNDRY_OUT_DIR = path.join(CONTRACTS_ROOT_DIR, 'out');
+const CONTRACT_METADATA_DIR = path.join(CONTRACTS_ROOT_DIR, 'contract-metadata');
 
-const ONCHAIN_FACTS_PATH = `${WORK_DIR}/src/onchain-facts.ts`;
+const ONCHAIN_FACTS_PATH = path.join(WORK_DIR, 'src', 'onchain-facts.ts');
 
 /*
  * Arc Studio writes the facts module into the sandbox per chat, so it is absent from
@@ -144,7 +148,7 @@ function usage(supportedChains: string[]): string {
     '  bun run deploy:self SimpleToken',
     '  bun run deploy:self SimpleToken \'["My Token","MTK",1000000]\'',
     '  bun run deploy:self SimpleToken --chain BASE-SEPOLIA',
-    '  bun run deploy:self TreasuryVault --artifact /home/user/app/contracts/out/TreasuryVault.sol/TreasuryVault.json',
+    '  bun run deploy:self TreasuryVault --artifact contracts/out/TreasuryVault.sol/TreasuryVault.json',
     "  bun run deploy:self SimpleToken '[]' --wallet-id 00000000-0000-0000-0000-000000000000 --skip-funding",
     '',
     'Flags:',

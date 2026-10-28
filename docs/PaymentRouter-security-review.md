@@ -123,7 +123,7 @@ The following items were identified during the engineering self-review. Each was
 ## 5. Build and Test Commands
 
 ```bash
-# Build (from /home/user/app)
+# Build (from project root)
 bun run contracts:build
 # or directly:
 forge build

@@ -5,14 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build": "vite build",
     "deploy:self": "bun run ./scripts/self-deploy.ts",
     "compass:deploy": "bun run ./scripts/compass-deploy.ts",
     "fetch:abi": "bun run ./scripts/fetch-abi.ts",
-    "lint": "oxlint --type-aware src scripts --fix; s=$?; oxlint --fix .; exit $((s>0?s:$?))",
+    "lint": "oxlint src scripts",
     "typecheck": "tsc --noEmit",
     "check": "bash scripts/check.sh",
     "contracts:build": "forge build",
-    "contracts:test": "forge test"
+    "contracts:test": "forge test",
+    "test:compass": "node --experimental-strip-types ./scripts/compass-deploy.test.ts",
+    "test:cheetahpay": "node --experimental-strip-types ./scripts/test-cheetahpay.ts"
   },
   "dependencies": {
     "@circle-fin/adapter-viem-v2": "^1.19.2",

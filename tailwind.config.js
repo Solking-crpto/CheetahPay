@@ -6,7 +6,19 @@ export default {
   ],
   theme: {
     extend: {
-      // Add your custom colors, fonts, etc. here
+      colors: {
+        fintech: {
+          page: '#0B0D10',
+          surface: '#12151A',
+          subtle: '#191D23',
+          border: '#2A3038',
+          text: '#F3F4F6',
+          secondary: '#9CA3AF',
+          muted: '#737B87',
+          accent: '#D6A23D',
+          accentHover: '#C29132',
+        },
+      },
     },
   },
   plugins: [],

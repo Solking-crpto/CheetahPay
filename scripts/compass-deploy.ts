@@ -1,4 +1,6 @@
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import {
   initiateDeveloperControlledWalletsClient,
@@ -11,7 +13,7 @@ import {
   type Blockchain as ScpBlockchain,
   type CircleSmartContractPlatformClient,
 } from '@circle-fin/smart-contract-platform';
-import { getChain } from '@circlefin/compass-chains';
+import { ONCHAIN_CHAINS } from '../src/onchain-facts.ts';
 import { type Abi, type Hex, createPublicClient, createWalletClient, encodeFunctionData, http, keccak256 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
@@ -45,7 +47,7 @@ import {
   validateAddress,
   validateContractName,
   verifyReceiptPath,
-} from './compass-deploy-helpers';
+} from './compass-deploy-helpers.ts';
 
 interface ChainConfig {
   circleBlockchain: string;
@@ -63,25 +65,111 @@ const ACTIVE_CHAIN: ChainConfig = {
   gasToken: 'native',
 };
 
-function resolveChainDef(compassChain: string): ReturnType<typeof getChain> {
-  try {
-    return getChain(compassChain);
-  } catch {
-    throw new Error(`Unknown --compass-chain "${compassChain}". Expected a Compass chain id (e.g. Arc_Testnet, Base_Sepolia).`);
+/**
+ * Explicit, fail-closed mapping between each supported chain in src/onchain-facts.ts
+ * and its verified Circle SDK blockchain identifier.
+ *
+ * Verified against official Circle SDK types (@circle-fin/smart-contract-platform
+ * and @circle-fin/developer-controlled-wallets).
+ *
+ * Arc mainnet (5042) maps to 'ARC' and Arc Testnet (5042002) maps to 'ARC-TESTNET'.
+ * Chains with missing mappings in this table do not have Circle SDK deployment support.
+ */
+export const CHAIN_ID_TO_CIRCLE_BLOCKCHAIN: Readonly<Record<number, string>> = Object.freeze({
+  5042002: 'ARC-TESTNET',  // Arc Testnet
+  5042: 'ARC',             // Arc Mainnet
+  11155111: 'ETH-SEPOLIA', // Ethereum Sepolia
+  84532: 'BASE-SEPOLIA',   // Base Sepolia
+  421614: 'ARB-SEPOLIA',   // Arbitrum Sepolia
+  43113: 'AVAX-FUJI',      // Avalanche Fuji
+  80002: 'MATIC-AMOY',     // Polygon Amoy
+  11155420: 'OP-SEPOLIA',  // OP Sepolia
+  1301: 'UNI-SEPOLIA',     // Unichain Sepolia
+  10143: 'MONAD-TESTNET',  // Monad Testnet
+});
+
+export interface CompassChainDef {
+  chainId: number;
+  name: string;
+  explorerUrl: string;
+  nativeCurrency: {
+    symbol: string;
+    decimals: number;
+  };
+  circleBlockchain?: string;
+}
+
+export function resolveChainDef(compassChain: string): CompassChainDef {
+  const trimmed = compassChain.trim();
+  if (!trimmed) {
+    throw new Error('A non-empty --compass-chain identifier is required.');
   }
+
+  const lower = trimmed.toLowerCase();
+  const upper = trimmed.toUpperCase();
+
+  const matches = ONCHAIN_CHAINS.filter((c) => {
+    // 1. Exact chain name (case-insensitive, e.g. "Arc Testnet", "Arc", "Base Sepolia")
+    if (c.name.toLowerCase() === lower) {
+      return true;
+    }
+
+    // 2. Documented Compass / CLI alias (e.g. "Arc_Testnet", "arc-testnet", "Base_Sepolia")
+    const underscoreAlias = c.name.toLowerCase().replace(/\s+/g, '_');
+    const hyphenAlias = c.name.toLowerCase().replace(/\s+/g, '-');
+    if (lower === underscoreAlias || lower === hyphenAlias) {
+      return true;
+    }
+
+    // 3. Exact Circle SDK blockchain identifier for this chain (e.g. "ARC-TESTNET", "ARC", "BASE-SEPOLIA")
+    const circleId = CHAIN_ID_TO_CIRCLE_BLOCKCHAIN[c.chainId];
+    if (circleId && (circleId.toUpperCase() === upper || circleId.replace(/-/g, '_').toUpperCase() === upper)) {
+      return true;
+    }
+
+    return false;
+  });
+
+  if (matches.length === 0) {
+    throw new Error(
+      `Unknown --compass-chain "${compassChain}". Expected a supported chain name, documented alias (e.g. Arc_Testnet, Base_Sepolia), or exact Circle SDK identifier (e.g. ARC-TESTNET, ARC).`,
+    );
+  }
+
+  if (matches.length > 1) {
+    throw new Error(
+      `Ambiguous --compass-chain "${compassChain}" matches multiple chains: ${matches.map((m) => m.name).join(', ')}.`,
+    );
+  }
+
+  const found = matches[0];
+  const circleBlockchain = CHAIN_ID_TO_CIRCLE_BLOCKCHAIN[found.chainId];
+
+  return {
+    chainId: found.chainId,
+    name: found.name,
+    explorerUrl: found.explorerBase,
+    nativeCurrency: {
+      symbol: found.nativeCurrency.symbol,
+      decimals: found.nativeCurrency.decimals,
+    },
+    circleBlockchain,
+  };
 }
 
 function explorerUrlFor(address: string): string {
   return ACTIVE_CHAIN.explorer ? `${ACTIVE_CHAIN.explorer}/address/${address}` : address;
 }
 
-const WORK_DIR = '/home/user/app';
-const CONTRACTS_ROOT_DIR = `${WORK_DIR}/contracts`;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const WORK_DIR = path.resolve(__dirname, '..');
+const CONTRACTS_ROOT_DIR = path.join(WORK_DIR, 'contracts');
 const CONTRACT_SOURCES_DIR = CONTRACTS_ROOT_DIR;
-const FOUNDRY_OUT_DIR = `${CONTRACTS_ROOT_DIR}/out`;
-const CONTRACT_METADATA_DIR = `${CONTRACTS_ROOT_DIR}/contract-metadata`;
+const FOUNDRY_OUT_DIR = path.join(CONTRACTS_ROOT_DIR, 'out');
+const CONTRACT_METADATA_DIR = path.join(CONTRACTS_ROOT_DIR, 'contract-metadata');
 
-const CREATE2_FACTORY_ARTIFACT = `${FOUNDRY_OUT_DIR}/Create2Factory.sol/Create2Factory.json`;
+const CREATE2_FACTORY_ARTIFACT = path.join(FOUNDRY_OUT_DIR, 'Create2Factory.sol', 'Create2Factory.json');
 
 const CREATE2_FACTORY_ABI = [
   {
@@ -97,7 +185,7 @@ const CREATE2_FACTORY_ABI = [
 ] as const;
 
 function defaultFoundryArtifactPath(contractName: string): string {
-  return `${FOUNDRY_OUT_DIR}/${contractName}.sol/${contractName}.json`;
+  return path.join(FOUNDRY_OUT_DIR, `${contractName}.sol`, `${contractName}.json`);
 }
 
 const FUNDING_WAIT_MS = 2_000;
@@ -339,12 +427,29 @@ export function parseArgs(argv: string[]): CliOptions {
     throw new Error('--wallet-address is required when --wallet-id is provided.');
   }
 
-  if (!blockchain) {
-    throw new Error('--blockchain is required (the Circle SDK blockchain enum, e.g. ARC-TESTNET).');
-  }
-
   if (!compassChain) {
     throw new Error('--compass-chain is required (the Compass chain id, e.g. Arc_Testnet).');
+  }
+
+  const chainDef = resolveChainDef(compassChain);
+  const expectedCircleBlockchain = chainDef.circleBlockchain;
+
+  if (blockchain) {
+    if (!expectedCircleBlockchain || blockchain.trim().toUpperCase() !== expectedCircleBlockchain.toUpperCase()) {
+      const detail = expectedCircleBlockchain
+        ? `expected "${expectedCircleBlockchain}"`
+        : `this chain does not support Circle SDK deployment (no Circle SDK blockchain identifier mapped)`;
+      throw new Error(
+        `--blockchain "${blockchain}" does not match the registered Circle SDK identifier for --compass-chain "${compassChain}" (${detail}).`,
+      );
+    }
+  }
+
+  const effectiveCircleBlockchain = blockchain ? blockchain.trim().toUpperCase() : expectedCircleBlockchain;
+  if (!effectiveCircleBlockchain) {
+    throw new Error(
+      `--blockchain is unavailable: chain "${chainDef.name}" has no supported Circle SDK blockchain identifier (Circle SDK deployment is unsupported for this chain).`,
+    );
   }
 
   if (signerKind === 'private-key' && (mode === 'live' || mode === 'fork-then-live') && !rpcUrl) {
@@ -358,8 +463,7 @@ export function parseArgs(argv: string[]): CliOptions {
 
   const resolvedRpcUrl = resolveRpcUrl(rpcUrl, compassChain);
 
-  const chainDef = resolveChainDef(compassChain);
-  ACTIVE_CHAIN.circleBlockchain = blockchain;
+  ACTIVE_CHAIN.circleBlockchain = effectiveCircleBlockchain;
   ACTIVE_CHAIN.compassChain = compassChain;
   ACTIVE_CHAIN.explorer = explorerOverride ?? chainDef.explorerUrl ?? '';
   ACTIVE_CHAIN.chainLabel = chainLabelOverride ?? chainDef.name;
@@ -1170,7 +1274,7 @@ async function runPrivateKeyDeploy(options: CliOptions, forkPredicted?: string):
   const deployerKey = coerceString(process.env.DEPLOYER_PRIVATE_KEY);
   if (!deployerKey) {
     throw new Error(
-      'DEPLOYER_PRIVATE_KEY must be set in /home/user/app/.env for a --signer private-key live deploy.',
+      `DEPLOYER_PRIVATE_KEY must be set in ${path.join(WORK_DIR, '.env')} for a --signer private-key live deploy.`,
     );
   }
 
