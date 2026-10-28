@@ -9,11 +9,11 @@ In our merchant suite, creating a payment request is standard, intuitive, and na
 
 Checkout is orchestrated via the ZIP-321 standard. Customers scan an offline, client-side vector QR code or dispatch directly to their personal wallet. The invoice reference is bound securely into the memo—formatting payment parameters without touching private keys.
 
-When verifying payments, CheetahPay enforces strict technical honesty. On-chain block inclusion is confirmed through live testnet telemetry, while shielded note plaintexts remain protected until decrypted by the merchant's private wallet.
+When verifying payments, CheetahPay enforces strict technical honesty. On-chain block inclusion is confirmed through live testnet node queries, while shielded note plaintexts remain protected until decrypted by the merchant's private wallet.
 
-From unified cross-rail transaction auditing to illustrative onboarding estimators, every interaction is built fail-closed, non-custodial, and verifiable.
+From cross-rail transaction records with CSV export to illustrative funding estimators, our checkout and settlement logic is built non-custodial, fail-closed, and transparent about verification limits.
 
-One seamless payment experience, bridging disparate financial worlds.
+One coherent payment experience, bridging disparate financial worlds.
 
 CheetahPay Shield.
 Pay fiat to Web3. Pay crypto to Web2.

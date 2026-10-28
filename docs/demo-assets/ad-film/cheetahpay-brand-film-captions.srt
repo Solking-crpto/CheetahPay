@@ -56,7 +56,7 @@ When verifying payments, CheetahPay enforces strict technical honesty.
 
 15
 00:00:53,023 --> 00:00:56,865
-On-chain block inclusion is confirmed through live testnet telemetry,
+On-chain block inclusion is confirmed through live testnet node queries,
 
 16
 00:00:56,993 --> 00:01:02,345
@@ -64,15 +64,15 @@ while shielded note plaintexts remain protected until decrypted by the merchant'
 
 17
 00:01:02,520 --> 00:01:07,060
-From unified cross-rail transaction auditing to illustrative onboarding estimators,
+From cross-rail transaction records with CSV export to illustrative funding estimators,
 
 18
 00:01:07,176 --> 00:01:11,668
-every interaction is built fail-closed, non-custodial, and verifiable.
+our checkout and settlement logic is built non-custodial, fail-closed, and transparent about verification limits.
 
 19
 00:01:11,796 --> 00:01:15,093
-One seamless payment experience, bridging disparate financial worlds.
+One coherent payment experience, bridging disparate financial worlds.
 
 20
 00:01:15,152 --> 00:01:16,034

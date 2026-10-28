@@ -4,26 +4,41 @@ const https = require('https');
 const { execSync } = require('child_process');
 
 function getElevenLabsConfig() {
-  const envPath = 'C:\\Users\\DELL\\Hackathon\\BizFlow Pilot\\.env.video.local';
-  if (!fs.existsSync(envPath)) {
-    throw new Error('Config file not found at ' + envPath);
-  }
-  const content = fs.readFileSync(envPath, 'utf8');
-  let apiKey = '';
-  let voiceId = '';
+  let apiKey = process.env.ELEVENLABS_API_KEY;
+  let voiceId = process.env.ELEVENLABS_VOICE_ID;
 
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('ELEVENLABS_API_KEY=')) {
-      apiKey = trimmed.substring('ELEVENLABS_API_KEY='.length).replace(/["']/g, '').trim();
+  // Check local .env if present
+  const localEnv = path.join(__dirname, '../.env');
+  if ((!apiKey || !voiceId) && fs.existsSync(localEnv)) {
+    const content = fs.readFileSync(localEnv, 'utf8');
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('ELEVENLABS_API_KEY=')) {
+        apiKey = apiKey || trimmed.substring('ELEVENLABS_API_KEY='.length).replace(/["']/g, '').trim();
+      }
+      if (trimmed.startsWith('ELEVENLABS_VOICE_ID=')) {
+        voiceId = voiceId || trimmed.substring('ELEVENLABS_VOICE_ID='.length).replace(/["']/g, '').trim();
+      }
     }
-    if (trimmed.startsWith('ELEVENLABS_VOICE_ID=')) {
-      voiceId = trimmed.substring('ELEVENLABS_VOICE_ID='.length).replace(/["']/g, '').trim();
+  }
+
+  // Optional custom environment file path via ELEVENLABS_ENV_FILE
+  const userEnv = process.env.ELEVENLABS_ENV_FILE;
+  if ((!apiKey || !voiceId) && userEnv && fs.existsSync(userEnv)) {
+    const content = fs.readFileSync(userEnv, 'utf8');
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('ELEVENLABS_API_KEY=')) {
+        apiKey = apiKey || trimmed.substring('ELEVENLABS_API_KEY='.length).replace(/["']/g, '').trim();
+      }
+      if (trimmed.startsWith('ELEVENLABS_VOICE_ID=')) {
+        voiceId = voiceId || trimmed.substring('ELEVENLABS_VOICE_ID='.length).replace(/["']/g, '').trim();
+      }
     }
   }
 
   if (!apiKey || !voiceId) {
-    throw new Error('ELEVENLABS_API_KEY or ELEVENLABS_VOICE_ID missing in config');
+    throw new Error('ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID must be set in environment variables (or specify ELEVENLABS_ENV_FILE).');
   }
 
   return { apiKey, voiceId };

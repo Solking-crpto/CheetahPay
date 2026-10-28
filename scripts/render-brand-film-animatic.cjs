@@ -31,12 +31,14 @@ async function main() {
   const mixCmd = `ffmpeg -y -i "${audioBedPath}" -i "${voPath}" -filter_complex "[1:a]adelay=1200|1200,volume=1.4[vo];[0:a]volume=0.35[bed];[bed][vo]amix=inputs=2:duration=first:dropout_transition=2[aout]" -map "[aout]" -c:a pcm_s16le "${mixedAudioPath}"`;
   execSync(mixCmd);
 
-  console.log('Rendering 1080p 16:9 brand film animatic preview...');
+  console.log('Rendering refined 1080p 16:9 brand film animatic preview...');
 
   const vf = [
     `color=c=#0B0D10:s=1920x1080:d=${filmDuration}:r=30[bg]`,
-    // Scene 1 Title (0 - 7s)
-    `[bg]drawtext=text='COMMERCE MOVES ACROSS WORLDS':fontcolor=#F3F4F6:fontsize=44:x=(w-text_w)/2:y=(h-text_h)/2-30:enable='between(t,0.5,6.8)':alpha='if(lt(t,1.5),(t-0.5),if(gt(t,6.0),1-(t-6.0),1))'[v1]`,
+    
+    // Scene 1: Amber line & Title (0 - 7s)
+    `[bg]drawtext=text='COMMERCE MOVES ACROSS WORLDS':fontcolor=#F3F4F6:fontsize=44:x=(w-text_w)/2:y=(h-text_h)/2-40:enable='between(t,0.5,6.8)':alpha='if(lt(t,1.5),(t-0.5),if(gt(t,6.0),1-(t-6.0),1))'[v0]`,
+    `[v0]drawbox=x=660:y=560:w=600:h=2:color=#D6A23D:t=fill:enable='between(t,1.0,6.8)'[v1]`,
     `[v1]drawtext=text='Traditional Banking Rails  •  Decentralized Networks  •  Zcash Privacy':fontcolor=#D6A23D:fontsize=20:x=(w-text_w)/2:y=(h-text_h)/2+40:enable='between(t,1.2,6.8)':alpha='if(lt(t,2.0),(t-1.2)/0.8,if(gt(t,6.0),1-(t-6.0),1))'[v2]`,
     
     // Scene 2 (7 - 17s): The Merchant's Need
@@ -58,30 +60,30 @@ async function main() {
 
     // Scene 5 (48 - 62s): Technical Honesty
     `[v13]drawtext=text='SETTLEMENT VERIFICATION INVARIANTS':fontcolor=#D6A23D:fontsize=20:x=(w-text_w)/2:y=220:enable='between(t,48.2,61.8)'[v14]`,
-    `[v14]drawtext=text='Live Testnet Telemetry vs Private Note Decryption':fontcolor=#F3F4F6:fontsize=36:x=(w-text_w)/2:y=270:enable='between(t,48.2,61.8)'[v15]`,
+    `[v14]drawtext=text='Live Testnet Block Queries vs Private Note Decryption':fontcolor=#F3F4F6:fontsize=36:x=(w-text_w)/2:y=270:enable='between(t,48.2,61.8)'[v15]`,
     `[v15]drawtext=text='[ Live Screen 04_testnet_verification.mp4 Insertion Zone ]':fontcolor=#9CA3AF:fontsize=24:x=(w-text_w)/2:y=480:enable='between(t,48.2,61.8)'[v16]`,
     `[v16]drawtext=text='Block Inclusion Confirmed on Zcash Testnet (SoChain Node) · Status: Awaiting Wallet Note Decryption':fontcolor=#737B87:fontsize=18:x=(w-text_w)/2:y=540:enable='between(t,48.2,61.8)'[v17]`,
 
     // Scene 6 (62 - 71s): Coherent Workflow
     `[v17]drawtext=text='CROSS-RAIL TELEMETRY':fontcolor=#D6A23D:fontsize=20:x=(w-text_w)/2:y=220:enable='between(t,62.2,70.8)'[v18]`,
-    `[v18]drawtext=text='Cross-Rail Transaction Auditing & Demo Estimators':fontcolor=#F3F4F6:fontsize=36:x=(w-text_w)/2:y=270:enable='between(t,62.2,70.8)'[v19]`,
+    `[v18]drawtext=text='Cross-Rail Transaction Records & Demo Estimator':fontcolor=#F3F4F6:fontsize=36:x=(w-text_w)/2:y=270:enable='between(t,62.2,70.8)'[v19]`,
     `[v19]drawtext=text='[ Live Screen 05_transactions.mp4 & 06_fund_wallet.mp4 Insertion Zone ]':fontcolor=#9CA3AF:fontsize=24:x=(w-text_w)/2:y=480:enable='between(t,62.2,70.8)'[v20]`,
     `[v20]drawtext=text='RFC-4180 CSV Export · Demo Estimator (No Live Funding · No Real Payment)':fontcolor=#737B87:fontsize=18:x=(w-text_w)/2:y=540:enable='between(t,62.2,70.8)'[v21]`,
 
     // Scene 7 & 8 (71 - 82s): Brand Statement & Closing Lockup
     `[v21]drawtext=text='CHEETAHPAY SHIELD':fontcolor=#F3F4F6:fontsize=52:x=(w-text_w)/2:y=(h-text_h)/2-70:enable='between(t,71.2,81.8)':alpha='if(lt(t,72.2),(t-71.2),1)'[v22]`,
     `[v22]drawtext=text='Pay fiat to Web3. Pay crypto to Web2.':fontcolor=#D6A23D:fontsize=26:x=(w-text_w)/2:y=(h-text_h)/2+10:enable='between(t,72.0,81.8)':alpha='if(lt(t,73.0),(t-72.0),1)'[v23]`,
-    `[v23]drawtext=text='ZECATHON 2026 PROTOTYPE':fontcolor=#737B87:fontsize=18:x=(w-text_w)/2:y=(h-text_h)/2+90:enable='between(t,73.5,81.8)'[v24]`,
-    `[v24]drawtext=text='https://cheetah-pay-ht9p.vercel.app':fontcolor=#9CA3AF:fontsize=16:x=(w-text_w)/2:y=(h-text_h)/2+130:enable='between(t,74.5,81.8)'[vout]`
+    `[v23]drawbox=x=760:y=580:w=400:h=2:color=#D6A23D:t=fill:enable='between(t,72.5,81.8)'[v24]`,
+    `[v24]drawtext=text='ZECATHON 2026 PROTOTYPE':fontcolor=#737B87:fontsize=18:x=(w-text_w)/2:y=(h-text_h)/2+90:enable='between(t,73.5,81.8)'[v25]`,
+    `[v25]drawtext=text='cheetah-pay-ht9p.vercel.app':fontcolor=#9CA3AF:fontsize=16:x=(w-text_w)/2:y=(h-text_h)/2+130:enable='between(t,74.5,81.8)'[vout]`
   ].join(';');
 
-  // -i mixedAudioPath MUST be specified before -filter_complex or mapping
   const renderCmd = `ffmpeg -y -i "${mixedAudioPath}" -filter_complex "${vf}" -map "[vout]" -map 0:a -c:v libx264 -preset fast -crf 19 -pix_fmt yuv420p -c:a aac -b:a 192k -t ${filmDuration} "${outMp4}"`;
   
   execSync(renderCmd);
 
   const stats = fs.statSync(outMp4);
-  console.log(`Master Brand Film Animatic Preview rendered successfully!`);
+  console.log(`Refined Master Brand Film Animatic Preview rendered successfully!`);
   console.log(`Path: ${outMp4}`);
   console.log(`File size: ${stats.size} bytes`);
   console.log(`Duration: ${filmDuration} seconds @ 1920x1080 30fps`);

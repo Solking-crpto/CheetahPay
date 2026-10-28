@@ -142,7 +142,7 @@
 ### Scene 6 — One Coherent Workflow (1:02 – 1:11)
 * **Duration:** 9.0 seconds (Timecode `00:01:02,300` to `00:01:11,600`)
 * **Narration (01:02.5 – 01:11.6):**
-  > *"From unified cross-rail transaction auditing to illustrative onboarding estimators, every interaction is built fail-closed, non-custodial, and verifiable."*
+  > *"From cross-rail transaction records with CSV export to illustrative funding estimators, our checkout and settlement logic is built non-custodial, fail-closed, and transparent about verification limits."*
 * **Visual Composition (Split-Screen / Rapid Sequence: `05_transactions` & `06_fund_wallet`):**
   * **01:02 – 01:06:** **Transactions** tab.
     * Multi-rail table showing provenance tags: `shielded-verified`, `onchain-verified`, `fiat-cleared`.
@@ -160,7 +160,7 @@
 ### Scene 7 — The Brand Statement (1:11 – 1:18)
 * **Duration:** 7.0 seconds (Timecode `00:01:11,600` to `00:01:18,300`)
 * **Narration (01:11.7 – 01:18.3):**
-  > *"One seamless payment experience, bridging disparate financial worlds. CheetahPay Shield. Pay fiat to Web3. Pay crypto to Web2."*
+  > *"One coherent payment experience, bridging disparate financial worlds. CheetahPay Shield. Pay fiat to Web3. Pay crypto to Web2."*
 * **Visual Composition:**
   * The amber line sweeps inward from top and bottom horizons, intersecting in the golden ratio center.
   * A geometric shield vector outlines in crisp amber (`#D6A23D`).

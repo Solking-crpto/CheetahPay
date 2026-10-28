@@ -79,7 +79,7 @@ docs/demo-assets/ad-film/raw-recordings/
 ### Shot 4: `04_testnet_verification.mp4`
 * **Screen:** Pay with Zcash Tab (Scrolled down to Testnet Terminal)
 * **Target Usable Duration in Edit:** ~14 seconds (record 18 seconds)
-* **Voiceover Sync:** `"When verifying payments, CheetahPay enforces strict technical honesty. On-chain block inclusion is confirmed through live testnet telemetry..."`
+* **Voiceover Sync:** `"When verifying payments, CheetahPay enforces strict technical honesty. On-chain block inclusion is confirmed through live testnet node queries..."`
 * **Recording Actions:**
   1. Scroll down until the **Live Testnet Verification Terminal** is centered.
   2. In the sample demonstration box, click **Load Sample Testnet Tx**:
@@ -96,7 +96,7 @@ docs/demo-assets/ad-film/raw-recordings/
 ### Shot 5: `05_transactions.mp4`
 * **Screen:** Transactions Tab
 * **Target Usable Duration in Edit:** ~5 seconds (record 8 seconds)
-* **Voiceover Sync:** `"From unified cross-rail transaction auditing..."`
+* **Voiceover Sync:** `"From cross-rail transaction records with CSV export..."`
 * **Recording Actions:**
   1. Click **Transactions** in the top navigation.
   2. Show the multi-rail cross-settlement table with provenance tags (`shielded-verified`, `onchain-verified`, `fiat-cleared`).
@@ -109,7 +109,7 @@ docs/demo-assets/ad-film/raw-recordings/
 ### Shot 6: `06_fund_wallet.mp4`
 * **Screen:** Fund Wallet Tab
 * **Target Usable Duration in Edit:** ~5 seconds (record 8 seconds)
-* **Voiceover Sync:** `"...to illustrative onboarding estimators, every interaction is built fail-closed, non-custodial, and verifiable."`
+* **Voiceover Sync:** `"...to illustrative funding estimators, our checkout and settlement logic is built non-custodial, fail-closed, and transparent about verification limits."`
 * **Recording Actions:**
   1. Click **Fund Wallet** in navigation.
   2. Select asset **ZEC** and payment method **Debit / Credit Card**.
