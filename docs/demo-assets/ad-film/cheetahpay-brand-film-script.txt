@@ -1,0 +1,19 @@
+Commerce moves across worlds.
+Old ledgers and new chains. Regulated rails and decentralized networks.
+
+For modern merchants, accepting value across fragmented financial systems has always meant friction—juggling disparate custody models, currency volatility, and incompatible rails.
+
+Meet CheetahPay Shield.
+
+In our merchant suite, creating a payment request is standard, intuitive, and native to Zcash. The system transparently classifies receiver capabilities—alerting users to public address exposure while unlocking the power of shielded Unified pools.
+
+Checkout is orchestrated via the ZIP-321 standard. Customers scan an offline, client-side vector QR code or dispatch directly to their personal wallet. The invoice reference is bound securely into the memo—formatting payment parameters without touching private keys.
+
+When verifying payments, CheetahPay enforces strict technical honesty. On-chain block inclusion is confirmed through live testnet telemetry, while shielded note plaintexts remain protected until decrypted by the merchant's private wallet.
+
+From unified cross-rail transaction auditing to illustrative onboarding estimators, every interaction is built fail-closed, non-custodial, and verifiable.
+
+One seamless payment experience, bridging disparate financial worlds.
+
+CheetahPay Shield.
+Pay fiat to Web3. Pay crypto to Web2.

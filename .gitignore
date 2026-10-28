@@ -11,4 +11,7 @@ out/
 cache/
 broadcast/
 artifacts/
-docs/demo-assets/*.mp3
+docs/demo-assets/**/*.mp3
+*.mp3
+docs/demo-assets/**/*.mp4
+*.mp4
