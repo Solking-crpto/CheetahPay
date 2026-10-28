@@ -6,22 +6,14 @@ import {
   Smartphone,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
   AlertTriangle,
-  Info,
-  Clock,
-  ExternalLink,
-  RefreshCw,
-  Copy,
-  Check,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   FiatQuote,
-  FiatFundingRecord,
   TargetCryptoAsset,
   FiatPaymentMethod,
-  FiatFundingStatus,
 } from '../../types/cheetahpay';
 import { FiatOnrampService } from '../../services/fiatOnrampService';
 
@@ -34,15 +26,8 @@ export const FundWalletView: React.FC = () => {
   const [sourceAmount, setSourceAmount] = useState('150.00');
   const [destinationWallet, setDestinationWallet] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<FiatPaymentMethod>('card');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-
-  // Execution State
-  const [activeRecord, setActiveRecord] = useState<FiatFundingRecord | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [copiedTx, setCopiedTx] = useState(false);
-
-  // Provider status
-  const providerStatus = FiatOnrampService.checkProviderStatus();
+  const [acknowledgedDemo, setAcknowledgedDemo] = useState(false);
+  const [, setHasCalculated] = useState(false);
 
   // Compute quote derived synchronously during render
   let currentQuote: FiatQuote | null = null;
@@ -58,63 +43,24 @@ export const FundWalletView: React.FC = () => {
         sourceAmount: amountNum,
         targetAsset,
         paymentMethod,
-        destinationWallet: destinationWallet || connectedAddress || '0x0000000000000000000000000000000000000000',
+        destinationWallet: destinationWallet.trim() || connectedAddress || '0x0000000000000000000000000000000000000000',
       });
     } catch (err: unknown) {
       quoteError = err instanceof Error ? err.message : 'Invalid quotation parameters';
     }
   }
 
-  const handleStartFunding = async () => {
-    if (!currentQuote) return;
-    const dest = destinationWallet.trim() || connectedAddress;
-    if (!dest) {
-      toast.error('Please specify a destination wallet address');
+  const handleCalculateEstimate = () => {
+    if (!currentQuote) {
+      toast.error(quoteError || 'Please enter an amount between $20.00 and $10,000.00');
       return;
     }
-    if (!acceptedTerms) {
-      toast.error('Please review and accept provider compliance terms');
+    if (!acknowledgedDemo) {
+      toast.error('Please acknowledge that this is an illustrative demo estimate and live funding is unavailable.');
       return;
     }
-
-    if (!providerStatus.isConfigured) {
-      toast.error('Provider gateway credentials are required to initiate real funding.');
-      const record = FiatOnrampService.createFundingRecord(currentQuote);
-      setActiveRecord(record);
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      // Real provider connection probe
-      const circleKey = typeof localStorage !== 'undefined' ? localStorage.getItem('cheetahpay_circle_api_key') : null;
-      if (circleKey) {
-        const probe = await FiatOnrampService.testCircleConnection(circleKey);
-        if (!probe.connected) {
-          throw new Error(`Circle ping probe failed: ${probe.message}`);
-        }
-      }
-      const record = FiatOnrampService.createFundingRecord(currentQuote);
-      setActiveRecord(record);
-      toast.info('Circle ping probe succeeded. Note: Live card charging requires backend payment processor integration.');
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Provider probe failed');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleReset = () => {
-    setActiveRecord(null);
-    setIsProcessing(false);
-  };
-
-  const copyTxHash = () => {
-    if (!activeRecord?.deliveryTxHash) return;
-    void navigator.clipboard.writeText(activeRecord.deliveryTxHash);
-    setCopiedTx(true);
-    setTimeout(() => setCopiedTx(false), 2000);
-    toast.info('Delivery hash copied');
+    setHasCalculated(true);
+    toast.success('Demo estimate calculated (Demo estimate — not a live quote)');
   };
 
   return (
@@ -126,57 +72,50 @@ export const FundWalletView: React.FC = () => {
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-[#F3F4F6]">Web2 to Web3: Fund Wallet</h1>
               <span className="px-2.5 py-0.5 text-xs font-medium rounded-md bg-[#191D23] text-[#D6A23D] border border-[#2A3038]">
-                Illustrative Gateway Model
+                Demo Calculator
               </span>
             </div>
             <p className="text-xs text-[#9CA3AF] mt-1">
-              Deposit crypto using Credit/Debit Cards, SEPA, or US ACH with illustrative fee estimation and fail-closed settlement rules.
+              Illustrative fee and conversion calculator. Model crypto deposits using Credit/Debit Cards, SEPA, or US ACH.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono px-3 py-1.5 rounded-md bg-[#0B0D10] border border-[#2A3038] text-[#9CA3AF] flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${providerStatus.isLive ? 'bg-[#22C55E]' : 'bg-[#D6A23D]'}`} />
-              <span>{providerStatus.providerName}</span>
+              <span className="w-2 h-2 rounded-full bg-[#D6A23D]" />
+              <span>Live funding unavailable</span>
             </span>
           </div>
         </div>
 
-        {/* Provider Setup Notification */}
-        {!providerStatus.isConfigured ? (
-          <div className="mt-4 p-3.5 rounded-md bg-[#191D23] border border-[#2A3038] flex items-start gap-3 text-xs text-[#9CA3AF]">
-            <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#D6A23D]" />
-            <div>
-              <p className="font-semibold text-[#F3F4F6]">Illustrative Quotation Engine Active · Gateway Integration Pending Setup</p>
-              <p className="text-[11px] text-[#737B87] mt-0.5 leading-relaxed">
-                Fee calculations (2.9% + $0.30 cards, 0.5% + €1.00 SEPA, 0.8% + $1.00 ACH) and limits ($20–$10,000) are hardcoded illustrative estimates for modeling purposes. On-chain asset delivery requires linking your Circle or Stripe API key via a secure backend proxy. No fake transactions or fabricated balances will be generated.
-              </p>
-            </div>
+        {/* Live Funding Unavailable Notification */}
+        <div className="mt-4 p-4 rounded-md bg-[#191D23] border border-[#2A3038] flex items-start gap-3 text-xs text-[#9CA3AF]">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#D6A23D]" />
+          <div className="space-y-1">
+            <p className="font-semibold text-[#F3F4F6]">Live Funding Unavailable · Illustrative Demo Calculator Only</p>
+            <p className="text-[11px] text-[#737B87] leading-relaxed">
+              No live fiat-to-crypto gateway provider is connected. All exchange rates, fees (2.9% + $0.30 cards, 0.5% + €1.00 SEPA, 0.8% + $1.00 ACH), and delivery estimates are <strong>Demo estimate — not a live quote</strong>. No payment order, settlement intent, or balance is created, and no real funds will be charged or delivered.
+            </p>
           </div>
-        ) : (
-          <div className="mt-4 p-3.5 rounded-md bg-[#191D23] border border-[#2A3038] flex items-start gap-3 text-xs text-[#9CA3AF]">
-            <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#D6A23D]" />
-            <div>
-              <p className="font-semibold text-[#F3F4F6]">{providerStatus.providerName} Sandbox Probe Configured</p>
-              <p className="text-[11px] text-[#737B87] mt-0.5 leading-relaxed">
-                Developer connectivity probe key is saved in local memory. <strong>Notice:</strong> A ping probe does NOT constitute a live on-ramp integration. Live fiat payment processing, card tokenization, and asset delivery require backend secret custody, institutional KYB onboarding, and regulated gateway contracts.
-              </p>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Form & Configuration */}
         <div className="lg:col-span-7 bg-[#12151A] border border-[#2A3038] rounded-lg p-6 space-y-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#9CA3AF]">
-            Funding Parameters
-          </h2>
+          <div className="flex items-center justify-between pb-2 border-b border-[#2A3038]">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#9CA3AF]">
+              Demo Calculation Parameters
+            </h2>
+            <span className="text-[10px] text-[#D6A23D] font-mono">
+              Simulation Only
+            </span>
+          </div>
 
           {/* Asset to Receive */}
           <div>
             <label className="block text-xs font-medium uppercase tracking-wider text-[#737B87] mb-2">
-              Asset to Receive
+              Asset to Model
             </label>
             <div className="grid grid-cols-4 gap-2">
               {(['ZEC', 'USDC', 'ETH', 'BTC'] as TargetCryptoAsset[]).map((asset) => (
@@ -203,7 +142,7 @@ export const FundWalletView: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-medium uppercase tracking-wider text-[#737B87]">
-                You Pay
+                Hypothetical Amount
               </label>
               <span className="text-xs text-[#737B87]">Min $20.00 · Max $10,000.00</span>
             </div>
@@ -233,9 +172,9 @@ export const FundWalletView: React.FC = () => {
 
           {/* Destination Wallet */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-medium uppercase tracking-wider text-[#737B87]">
-                Destination Wallet Address
+                Destination Wallet Address (Optional)
               </label>
               {connectedAddress && (
                 <button
@@ -247,11 +186,14 @@ export const FundWalletView: React.FC = () => {
                 </button>
               )}
             </div>
+            <p className="text-[11px] text-[#737B87] mb-2 leading-tight">
+              Used solely to format estimate parameters. Entering an address does <strong>not</strong> initiate a transfer or lock funds.
+            </p>
             <input
               type="text"
               value={destinationWallet}
               onChange={(e) => setDestinationWallet(e.target.value.trim())}
-              placeholder={targetAsset === 'ZEC' ? 'utest1... or tm...' : '0x...'}
+              placeholder={targetAsset === 'ZEC' ? 'utest1... or tm... (optional for demo estimate)' : '0x... (optional for demo estimate)'}
               className="w-full bg-[#0B0D10] border border-[#2A3038] focus:border-[#D6A23D] rounded-md px-3.5 py-2.5 font-mono text-xs text-[#F3F4F6] outline-none transition"
             />
           </div>
@@ -259,7 +201,7 @@ export const FundWalletView: React.FC = () => {
           {/* Payment Method */}
           <div>
             <label className="block text-xs font-medium uppercase tracking-wider text-[#737B87] mb-2">
-              Select Payment Method
+              Select Hypothetical Payment Rail
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
@@ -275,6 +217,7 @@ export const FundWalletView: React.FC = () => {
                 <div>
                   <div className="font-semibold text-xs text-[#F3F4F6]">Debit / Credit Card</div>
                   <div className="text-[11px] text-[#737B87] mt-0.5">Instant · 2.9% + $0.30</div>
+                  <div className="text-[10px] text-[#D6A23D] mt-1 font-mono">Demo estimate — not a live quote</div>
                 </div>
               </button>
 
@@ -291,6 +234,7 @@ export const FundWalletView: React.FC = () => {
                 <div>
                   <div className="font-semibold text-xs text-[#F3F4F6]">SEPA Transfer</div>
                   <div className="text-[11px] text-[#737B87] mt-0.5">1-2 Days · 0.5% + €1.00</div>
+                  <div className="text-[10px] text-[#D6A23D] mt-1 font-mono">Demo estimate — not a live quote</div>
                 </div>
               </button>
 
@@ -307,58 +251,54 @@ export const FundWalletView: React.FC = () => {
                 <div>
                   <div className="font-semibold text-xs text-[#F3F4F6]">US ACH Bank</div>
                   <div className="text-[11px] text-[#737B87] mt-0.5">2-3 Days · 0.8% + $1.00</div>
+                  <div className="text-[10px] text-[#D6A23D] mt-1 font-mono">Demo estimate — not a live quote</div>
                 </div>
               </button>
             </div>
           </div>
 
-          {/* Compliance Checkbox */}
+          {/* Demo Acknowledgment Checkbox */}
           <div className="pt-2 border-t border-[#2A3038]">
             <label className="flex items-start gap-3 cursor-pointer text-xs text-[#9CA3AF] select-none">
               <input
                 type="checkbox"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                checked={acknowledgedDemo}
+                onChange={(e) => setAcknowledgedDemo(e.target.checked)}
                 className="mt-0.5 rounded border-[#2A3038] bg-[#0B0D10] text-[#D6A23D] focus:ring-[#D6A23D]"
               />
-              <span>
-                I agree to the non-custodial delivery terms and understand that crypto delivery executes only upon verified bank/card clearing.
+              <span className="leading-relaxed">
+                I understand this is an illustrative demo estimate. Live funding is unavailable, no funds will be collected or charged, and no cryptocurrency will be delivered.
               </span>
             </label>
           </div>
 
           {/* Trigger Button */}
-          {!activeRecord ? (
-            <button
-              type="button"
-              onClick={handleStartFunding}
-              disabled={!currentQuote || !acceptedTerms || !destinationWallet}
-              className="w-full py-3 px-4 rounded-md bg-[#D6A23D] hover:bg-[#C29132] disabled:opacity-40 disabled:cursor-not-allowed text-[#0B0D10] font-semibold text-xs flex items-center justify-center gap-2 transition"
-            >
-              <span>Review Funding Order</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleReset}
-              className="w-full py-2.5 px-4 rounded-md bg-[#191D23] hover:bg-[#2A3038] border border-[#2A3038] text-[#F3F4F6] font-medium text-xs transition"
-            >
-              Start New Request
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleCalculateEstimate}
+            disabled={!currentQuote}
+            className="w-full py-3 px-4 rounded-md bg-[#D6A23D] hover:bg-[#C29132] disabled:opacity-40 disabled:cursor-not-allowed text-[#0B0D10] font-semibold text-xs flex items-center justify-center gap-2 transition"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Calculate Demo Estimate</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Right Column: Quotation Breakdown & Settlement State Machine */}
+        {/* Right Column: Quotation Breakdown & Status Safeguards */}
         <div className="lg:col-span-5 space-y-6">
           {/* Quote Card */}
           <div className="bg-[#12151A] border border-[#2A3038] rounded-lg p-6">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF] mb-2 pb-2 border-b border-[#2A3038] flex items-center justify-between">
-              <span>Illustrative Fee Estimate (Indicative)</span>
-              <Clock className="w-3.5 h-3.5 text-[#737B87]" />
-            </h3>
-            <p className="text-[11px] text-[#737B87] font-sans mb-3">
-              Fee formulas and rates are hardcoded illustrative estimates for modeling purposes. No live provider quotation API has been called.
+            <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#2A3038]">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">
+                Illustrative Fee Calculator
+              </h3>
+              <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-[#191D23] text-[#D6A23D] border border-[#2A3038]">
+                Demo estimate — not a live quote
+              </span>
+            </div>
+            <p className="text-[11px] text-[#737B87] font-sans mb-3 leading-relaxed">
+              Fee formulas and rates are hardcoded illustrative estimates for modeling purposes. No live provider quotation API has been queried.
             </p>
 
             {quoteError ? (
@@ -368,37 +308,72 @@ export const FundWalletView: React.FC = () => {
               </div>
             ) : currentQuote ? (
               <div className="space-y-4 font-mono text-xs">
-                <div className="flex items-center justify-between py-2 border-b border-[#2A3038]">
-                  <span className="text-[#9CA3AF] font-sans">Estimated Asset Delivery</span>
-                  <span className="text-sm font-bold text-[#F3F4F6]">
-                    {currentQuote.targetAmount} {currentQuote.targetAsset}
+                <div className="flex flex-col py-2 border-b border-[#2A3038]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#9CA3AF] font-sans">Estimated Asset Delivery</span>
+                    <span className="text-sm font-bold text-[#F3F4F6]">
+                      ~{currentQuote.targetAmount} {currentQuote.targetAsset}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#D6A23D] self-end mt-0.5">
+                    Demo estimate — not a live quote
                   </span>
                 </div>
 
-                <div className="space-y-2 text-[#9CA3AF] text-[11px]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-sans">Payment Method Fee</span>
-                    <span className="text-[#F3F4F6]">${currentQuote.fees.processingFee.toFixed(2)}</span>
+                <div className="space-y-2.5 text-[#9CA3AF] text-[11px]">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans">Payment Method Fee</span>
+                      <span className="text-[#F3F4F6]">${currentQuote.fees.processingFee.toFixed(2)}</span>
+                    </div>
+                    <span className="text-[9px] text-[#737B87] self-end">Demo estimate — not a live quote</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-sans">Network Gas Fee</span>
-                    <span className="text-[#F3F4F6]">${currentQuote.fees.networkFee.toFixed(2)}</span>
+
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans">Network Gas Fee</span>
+                      <span className="text-[#F3F4F6]">${currentQuote.fees.networkFee.toFixed(2)}</span>
+                    </div>
+                    <span className="text-[9px] text-[#737B87] self-end">Demo estimate — not a live quote</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-sans">Provider Spread</span>
-                    <span className="text-[#F3F4F6]">${currentQuote.fees.providerMargin.toFixed(2)}</span>
+
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans">Provider Spread (0.4%)</span>
+                      <span className="text-[#F3F4F6]">${currentQuote.fees.providerMargin.toFixed(2)}</span>
+                    </div>
+                    <span className="text-[9px] text-[#737B87] self-end">Demo estimate — not a live quote</span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3038] font-bold text-[#F3F4F6]">
-                    <span className="font-sans">Total Fees</span>
-                    <span>${currentQuote.fees.totalFee.toFixed(2)}</span>
+
+                  <div className="flex flex-col gap-0.5 pt-2 border-t border-[#2A3038]">
+                    <div className="flex items-center justify-between font-bold text-[#F3F4F6]">
+                      <span className="font-sans">Total Estimated Fees</span>
+                      <span>${currentQuote.fees.totalFee.toFixed(2)}</span>
+                    </div>
+                    <span className="text-[9px] text-[#D6A23D] self-end font-semibold">Demo estimate — not a live quote</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#2A3038] flex items-center justify-between text-[11px] text-[#737B87] font-sans">
-                  <span>Estimated Delivery Time:</span>
-                  <span className="font-medium text-[#F3F4F6]">
-                    {currentQuote.estimatedDeliverySeconds < 300 ? '2 - 5 Minutes' : '1 - 3 Business Days'}
-                  </span>
+                <div className="pt-3 border-t border-[#2A3038] space-y-1.5 text-[11px] text-[#737B87] font-sans">
+                  <div className="flex items-center justify-between">
+                    <span>Estimated Delivery Window:</span>
+                    <span className="font-medium text-[#F3F4F6]">
+                      {currentQuote.estimatedDeliverySeconds < 300 ? '2 - 5 Minutes' : '1 - 3 Business Days'}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-[#D6A23D] text-right font-mono">
+                    Demo estimate — not a live quote
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span>Reference Exchange Rate:</span>
+                    <span className="font-medium text-[#F3F4F6] font-mono">
+                      1 {currentQuote.targetAsset} = ${currentQuote.exchangeRate.toFixed(2)} USD
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-[#D6A23D] text-right font-mono">
+                    Demo estimate — not a live quote
+                  </div>
                 </div>
               </div>
             ) : (
@@ -406,154 +381,53 @@ export const FundWalletView: React.FC = () => {
             )}
           </div>
 
-          {/* Settlement State Machine Terminal */}
-          {activeRecord && (
-            <div className="bg-[#12151A] border border-[#2A3038] rounded-lg p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#2A3038]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#F3F4F6] flex items-center gap-1.5">
-                  <RefreshCw className={`w-3.5 h-3.5 text-[#D6A23D] ${isProcessing ? 'animate-spin' : ''}`} />
-                  <span>Settlement Engine</span>
-                </span>
-                <span className="font-mono text-[10px] text-[#737B87]">{activeRecord.id}</span>
-              </div>
-
-              {/* State Progress Stepper */}
-              <div className="space-y-2">
-                {[
-                  { key: 'AWAITING_PAYMENT', label: '1. Awaiting Client Payment' },
-                  { key: 'PAYMENT_PROCESSING', label: '2. Payment Processing' },
-                  { key: 'PAYMENT_VERIFIED', label: '3. Payment Verified (Authoritative)' },
-                  { key: 'CRYPTO_DELIVERY_PENDING', label: '4. Crypto Delivery Pending' },
-                  { key: 'COMPLETED', label: '5. Settlement Completed' },
-                ].map((step, idx) => {
-                  const statesOrder: FiatFundingStatus[] = [
-                    'AWAITING_PAYMENT',
-                    'PAYMENT_PROCESSING',
-                    'PAYMENT_VERIFIED',
-                    'CRYPTO_DELIVERY_PENDING',
-                    'COMPLETED',
-                  ];
-                  const currentIdx = statesOrder.indexOf(activeRecord.status);
-                  const isDone = currentIdx > idx || activeRecord.status === 'COMPLETED';
-                  const isCurrent = statesOrder[idx] === activeRecord.status;
-
-                  return (
-                    <div
-                      key={step.key}
-                      className={`flex items-center justify-between p-2.5 rounded-md border text-xs transition ${
-                        isCurrent
-                          ? 'bg-[#191D23] border-[#D6A23D] text-[#D6A23D] font-semibold'
-                          : isDone
-                          ? 'bg-[#191D23] border-[#2A3038] text-[#22C55E]'
-                          : 'bg-[#0B0D10] border-[#2A3038] text-[#737B87]'
-                      }`}
-                    >
-                      <span>{step.label}</span>
-                      {isDone ? (
-                        <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
-                      ) : isCurrent && isProcessing ? (
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#D6A23D]" />
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Execution / Provider Gateway State */}
-              {activeRecord.status === 'AWAITING_PAYMENT' && (
-                <div>
-                  {!providerStatus.isConfigured ? (
-                    <div className="p-4 bg-[#191D23] border border-[#2A3038] rounded-md space-y-3">
-                      <div className="flex items-center gap-2 text-[#D6A23D] font-medium text-xs">
-                        <AlertTriangle className="w-4 h-4 shrink-0 text-[#D6A23D]" />
-                        <span>Provider Integration Setup Required (Category D Blocker)</span>
-                      </div>
-                      <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
-                        Production fiat-to-crypto liquidity requires integration with an approved on-ramp provider (Circle Mint API or Stripe Crypto). No live API credentials are configured in this environment (<code className="text-[#F3F4F6]">CIRCLE_API_KEY</code> or <code className="text-[#F3F4F6]">STRIPE_PUBLISHABLE_KEY</code>).
-                      </p>
-                      <div className="p-2.5 bg-[#0B0D10] border border-[#2A3038] rounded-md text-[10px] text-[#737B87] space-y-1 font-mono">
-                        <div>• Provider Target: Circle Programmable Wallets / Mint API</div>
-                        <div>• Required Compliance: Merchant KYB verification</div>
-                        <div>• Non-Custodial Rule: No fake transactions or fabricated balances</div>
-                      </div>
-                      <div className="flex items-center justify-between pt-1">
-                        <button
-                          type="button"
-                          onClick={handleReset}
-                          className="text-xs text-[#737B87] hover:text-[#F3F4F6]"
-                        >
-                          Modify Parameters
-                        </button>
-                        <span className="text-xs font-medium text-[#D6A23D]">
-                          Configure in Settings
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="p-3 bg-[#191D23] border border-[#2A3038] rounded-md text-xs text-[#22C55E] flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 shrink-0" />
-                        <span>Gateway Ready: {providerStatus.providerName} Authenticated</span>
-                      </div>
-                      <p className="text-[11px] text-[#9CA3AF] leading-normal">
-                        API connectivity confirmed. In production, your backend mint/session service generates the cryptographically signed provider checkout URL to collect cardholder KYC. Client-side simulated settlement is strictly prohibited.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          toast.info(`Gateway active. Dispatching signed on-ramp checkout session requires server-side mint endpoint.`);
-                        }}
-                        className="w-full py-2.5 px-4 rounded-md bg-[#D6A23D] hover:bg-[#C29132] text-[#0B0D10] font-semibold text-xs flex items-center justify-center gap-2 transition"
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>Authorize On-Ramp via {providerStatus.providerName}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Completed Settlement Proof */}
-              {activeRecord.status === 'COMPLETED' && (
-                <div className="p-3 bg-[#191D23] border border-[#2A3038] rounded-md space-y-2 text-xs">
-                  <div className="font-semibold text-[#22C55E] flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Settlement Proof Verified</span>
-                  </div>
-                  <div className="font-mono text-[11px] text-[#9CA3AF] break-all space-y-1">
-                    <div>
-                      <span className="text-[#737B87]">Ref: </span>
-                      {activeRecord.providerReference}
-                    </div>
-                    {activeRecord.deliveryTxHash && (
-                      <div className="flex items-center justify-between">
-                        <span className="truncate mr-2">Tx: {activeRecord.deliveryTxHash.slice(0, 16)}...</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={copyTxHash}
-                            className="text-[#D6A23D] hover:text-[#F3F4F6]"
-                          >
-                            {copiedTx ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                          {activeRecord.explorerUrl && (
-                            <a
-                              href={activeRecord.explorerUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[#D6A23D] hover:text-[#F3F4F6]"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+          {/* Live Funding Status & Safeguards Card */}
+          <div className="bg-[#12151A] border border-[#2A3038] rounded-lg p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3038]">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#F3F4F6] flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-[#D6A23D]" />
+                <span>Live Funding Status: Unavailable</span>
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#191D23] text-[#737B87] border border-[#2A3038]">
+                No Order Created
+              </span>
             </div>
-          )}
+
+            <div className="p-4 bg-[#0B0D10] border border-[#2A3038] rounded-md space-y-3">
+              <div className="text-xs text-[#F3F4F6] font-semibold">
+                Demonstration Invariants & Financial Safeguards
+              </div>
+              <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                CheetahPay enforces a strict fail-closed policy. Because no production payment provider (Circle Mint, Stripe Crypto, MoonPay) is configured in this deployment:
+              </p>
+              <div className="p-3 bg-[#191D23] border border-[#2A3038] rounded-md text-[10px] text-[#737B87] space-y-1.5 font-mono">
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <span className="text-[#D6A23D]">•</span>
+                  <span>No payment order or settlement reference generated</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <span className="text-[#D6A23D]">•</span>
+                  <span>Zero fiat funds collected, debited, or charged</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <span className="text-[#D6A23D]">•</span>
+                  <span>Zero crypto delivered or transferred to destination</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <span className="text-[#D6A23D]">•</span>
+                  <span>Destination address used solely for estimate calculation</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <span className="text-[#D6A23D]">•</span>
+                  <span>No fake balances or simulated settlement hashes created</span>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-[#737B87] leading-relaxed pt-1">
+                To enable live fiat-to-crypto processing, an institutional merchant requires corporate KYB verification, MSB licensing, regulated gateway agreements, and secure server-side session minting.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

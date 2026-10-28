@@ -196,10 +196,11 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 1. Click **Fund Wallet** in the top navigation bar.
 2. Select asset (`ZEC` or `USDC`) and payment channel (Credit/Debit Card, SEPA, ACH).
 3. Enter amount (e.g. `$150.00 USD`). Observe real-time fee breakdown (Processing fee, network gas fee, provider margin).
-4. Notice the **Illustrative Fee Estimate (Indicative)** notice: Fiat funding fees, exchange rates, and limits are illustrative models for interface prototyping, not live provider quotes.
-5. Review the **Gateway Setup & Integration Blocker Card**:
-   - In accordance with production security invariants, no simulated delivery hashes or fake balances are fabricated.
-   - When API credentials are not configured, the interface documents the institutional KYB and API provisioning requirements, explicitly highlighting the backend secret custody invariant.
+4. Notice the **Illustrative Fee Calculator (Demo estimate — not a live quote)** notices: all amounts, exchange rates, and limits are explicitly labeled as demo estimates, not live provider quotes.
+5. Review the **Live Funding Status: Unavailable (No Order Created)** panel:
+   - In accordance with production security invariants, clicking **Calculate Demo Estimate** does not generate payment orders, settlement IDs, delivery hashes, or fake balances.
+   - Destination address input is strictly optional for estimate formatting and does not initiate a transfer.
+   - When API credentials are not configured, the interface documents institutional KYB and API provisioning requirements, explicitly highlighting the backend secret custody invariant.
    - In **Settings**, test sandbox connectivity with `https://api.circle.com/v1/ping`.
 
 ### Step 8: Test Cross-Rail Ledger (`Transactions` tab)

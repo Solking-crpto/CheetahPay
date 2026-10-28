@@ -429,10 +429,20 @@ export class ZcashShieldService {
 
     try {
       // Query active SoChain Zcash Testnet REST API v3
-      const response = await fetch(`https://sochain.com/api/v3/transaction/ZECTEST/${encodeURIComponent(cleanTx)}`, {
+      const url = `https://sochain.com/api/v3/transaction/ZECTEST/${encodeURIComponent(cleanTx)}`;
+      let response = await fetch(url, {
         method: 'GET',
         headers: { Accept: 'application/json' },
       });
+
+      // Transient retry for public REST node rate limits
+      if (response.status === 429 || response.status >= 500) {
+        await new Promise((r) => setTimeout(r, 600));
+        response = await fetch(url, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        });
+      }
 
       if (!response.ok) {
         return {
